@@ -70,7 +70,7 @@
 	},
 
 	// 6. Set `remoteUser` to `root` to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-	"remoteUser": "vscode"
+	"remoteUser": "vscode",
 
 	// the following commands are related to container lifecylce. More info: https://containers.dev/implementors/json_reference/#lifecycle-scripts
 	
@@ -87,7 +87,7 @@
 	// "postCreateCommand": "pip3 install --user -r requirements.txt",
 
 	// 11. Use 'postStartCommand' to run a command each time the container starts successfully.
-	// "postStartCommand": "",
+	"postStartCommand": "npm i -g aws-cdk"
 	
 	// 12. Use 'postAttachCommand' to run a command each time a tool attaches to the container successfully. 
 	// "postAttachCommand": "",

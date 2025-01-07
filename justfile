@@ -1,3 +1,7 @@
+up:
+	python -m venv venv
+	source venv/bin/activate
+
 aider:
 	DEEPSEEK_API_KEY=$(cat .deepseek_key) aider --deepseek
 
