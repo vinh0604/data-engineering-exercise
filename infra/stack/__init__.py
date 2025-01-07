@@ -31,9 +31,9 @@ class MyStack(Stack):
             allow_all_outbound=True
         )
         db_security_group.add_ingress_rule(
-            peer=ec2.Peer.any_ipv4(),
+            peer=ec2.Peer.security_group_id(db_security_group.security_group_id),
             connection=ec2.Port.tcp(5432),
-            description="Allow PostgreSQL access"
+            description="Allow PostgreSQL access from within the same security group"
         )
 
         # Create RDS instance
