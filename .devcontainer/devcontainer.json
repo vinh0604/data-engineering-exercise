@@ -22,14 +22,7 @@
 
 	// 4. Features to add to the Dev Container. More info: https://containers.dev/implementors/features.
 	"features": {
-		"ghcr.io/devcontainers/features/common-utils:2": {
-			"installZsh": "true",
-			"configureZshAsDefaultShell": "true",
-			"username": "vscode",
-			"userUid": "1000",
-			"userGid": "1000",
-			"upgradePackages": "true"
-		},
+		"ghcr.io/devcontainers/features/common-utils:2": {},
 
 		// Python with uv, Ruff, Mypy, MonkeyType and Bandit, installed using pipx
 		"ghcr.io/devcontainers/features/python:1": {
@@ -42,7 +35,9 @@
 			"ppa": "false"
 		},
 		"ghcr.io/devcontainers/features/docker-in-docker": {},
-		"ghcr.io/guiyomh/features/just:0": {}
+		"ghcr.io/guiyomh/features/just:0": {},
+		"ghcr.io/devcontainers/features/aws-cli:1": {},
+		"ghcr.io/devcontainers/features/node:1": {}
 	},
 
 	// 5. Configure tool-specific properties.
