@@ -8,7 +8,7 @@ class MyStack(Stack):
         # Create VPC with both public and private subnets
         vpc = ec2.Vpc(self, "MyVPC",
             max_azs=1,
-            nat_gateways=1,  # Need NAT gateway for private subnet internet access
+            nat_gateways=0,  # Need NAT gateway for private subnet internet access
             subnet_configuration=[
                 ec2.SubnetConfiguration(
                     name="Public",
@@ -17,7 +17,7 @@ class MyStack(Stack):
                 ),
                 ec2.SubnetConfiguration(
                     name="Private",
-                    subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT,
+                    subnet_type=ec2.SubnetType.PRIVATE_ISOLATED,
                     cidr_mask=24
                 )
             ]
@@ -40,7 +40,7 @@ class MyStack(Stack):
             engine=rds.DatabaseInstanceEngine.postgres(version=rds.PostgresEngineVersion.VER_13),
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
             vpc=vpc,
-            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT),
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
             security_groups=[db_security_group],
             allocated_storage=20,
             max_allocated_storage=100,
