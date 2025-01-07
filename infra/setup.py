@@ -4,9 +4,9 @@ with open("README.md") as fp:
     long_description = fp.read()
 
 setuptools.setup(
-    name="cdk_starter",
+    name="data_engineering_infra",
     version="0.0.1",
-    description="AWS CDK Python starter project",
+    description="AWS CDK for Data Engineering Exercises",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="author",

@@ -5,8 +5,8 @@ from stack import MyStack
 app = cdk.App()
 
 env = cdk.Environment(
-    account="YOUR_AWS_ACCOUNT_ID",  # Replace with your AWS account ID
-    region="us-east-1"              # Replace with your preferred AWS region
+    account="992382816481",
+    region="ap-southeast-1"
 )
 
 MyStack(app, "MyStack", env=env)
