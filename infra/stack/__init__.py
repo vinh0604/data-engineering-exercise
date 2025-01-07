@@ -40,11 +40,11 @@ class MyStack(Stack):
             engine=rds.DatabaseInstanceEngine.postgres(version=rds.PostgresEngineVersion.VER_13),
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
             vpc=vpc,
-            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT),
             security_groups=[db_security_group],
             allocated_storage=20,
             max_allocated_storage=100,
-            publicly_accessible=True,
+            publicly_accessible=False,
             removal_policy=RemovalPolicy.DESTROY,
             deletion_protection=False
         )
