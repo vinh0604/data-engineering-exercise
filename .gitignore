@@ -2,3 +2,5 @@
 .env
 .*_key
 __pycache__
+venv
+cdk.out
