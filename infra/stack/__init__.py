@@ -7,7 +7,7 @@ class MyStack(Stack):
 
         # Create VPC with both public and private subnets
         vpc = ec2.Vpc(self, "MyVPC",
-            ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/16"),
+            ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/22"),  # 1024 IP addresses (10.0.0.0 - 10.0.3.255)
             max_azs=1,
             nat_gateways=0,  # Need NAT gateway for private subnet internet access
             subnet_configuration=[
