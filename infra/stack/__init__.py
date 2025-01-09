@@ -1,4 +1,5 @@
 from aws_cdk import Stack, aws_ec2 as ec2, aws_rds as rds, aws_autoscaling as autoscaling, aws_elasticloadbalancingv2 as elbv2, RemovalPolicy
+import os
 from constructs import Construct
 
 class MyStack(Stack):
@@ -92,32 +93,9 @@ class MyStack(Stack):
             "amazon-linux-extras install docker -y",
             "service docker start",
             "usermod -a -G docker ec2-user",
-            # Create and run metabase setup script
-            "cat > /home/ec2-user/setup-metabase.sh <<'EOF'",
-            "#!/bin/bash",
-            "docker volume create metabase-data",
-            "docker pull metabase/metabase",
-            "mkdir -p ~/metabase-data",
-            "docker run -d -p 80:3000 \\",
-            "  -v ~/metabase-data:/metabase-data \\",
-            "  -e \"MB_DB_FILE=/metabase-data/metabase.db\" \\",
-            "  --name metabase metabase/metabase",
-            "sudo bash -c 'cat > /etc/systemd/system/metabase.service <<\"END\"'",
-            "[Unit]",
-            "Description=Metabase service",
-            "After=docker.service",
-            "Requires=docker.service",
-            "[Service]",
-            "Restart=always",
-            "ExecStart=/usr/bin/docker start -a metabase",
-            "ExecStop=/usr/bin/docker stop metabase",
-            "User=ec2-user",
-            "[Install]",
-            "WantedBy=multi-user.target",
-            "END",
-            "sudo systemctl daemon-reload",
-            "sudo systemctl enable metabase.service",
-            "sudo systemctl start metabase.service",
+            # Read setup script content
+            f"cat > /home/ec2-user/setup-metabase.sh <<'EOF'",
+            open(os.path.join(os.path.dirname(__file__), "../setup-metabase.sh")).read(),
             "EOF",
             "chmod +x /home/ec2-user/setup-metabase.sh",
             "/home/ec2-user/setup-metabase.sh"
