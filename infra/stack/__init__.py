@@ -91,7 +91,7 @@ class MyStack(Stack):
         launch_template = ec2.LaunchTemplate(self, "LaunchTemplate",
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
             machine_image=ec2.MachineImage.latest_amazon_linux2(),
-            security_group=ec2_security_group,
+            security_groups=[ec2_security_group, db_security_group],
             user_data=ec2.UserData.for_linux(),
             block_devices=[
                 ec2.BlockDevice(
