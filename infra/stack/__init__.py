@@ -50,6 +50,18 @@ class MyStack(Stack):
             deletion_protection=False
         )
 
+        # Create security group for ALB
+        alb_security_group = ec2.SecurityGroup(self, "ALBSecurityGroup",
+            vpc=vpc,
+            description="Security group for Application Load Balancer",
+            allow_all_outbound=True
+        )
+        alb_security_group.add_ingress_rule(
+            peer=ec2.Peer.any_ipv4(),
+            connection=ec2.Port.tcp(80),
+            description="Allow HTTP access from anywhere"
+        )
+
         # Create security group for EC2 instances
         ec2_security_group = ec2.SecurityGroup(self, "EC2SecurityGroup",
             vpc=vpc,
@@ -57,16 +69,16 @@ class MyStack(Stack):
             allow_all_outbound=True
         )
         ec2_security_group.add_ingress_rule(
-            peer=ec2.Peer.any_ipv4(),
+            peer=ec2.Peer.security_group_id(alb_security_group.security_group_id),
             connection=ec2.Port.tcp(80),
-            description="Allow HTTP access from anywhere"
+            description="Allow HTTP access only from ALB"
         )
 
         # Create Application Load Balancer
         alb = elbv2.ApplicationLoadBalancer(self, "ALB",
             vpc=vpc,
             internet_facing=True,
-            security_group=ec2_security_group
+            security_group=alb_security_group
         )
 
         # Add listener to ALB
