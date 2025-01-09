@@ -44,11 +44,6 @@ class MyStack(Stack):
             description="Security group for EC2 instances",
             allow_all_outbound=True
         )
-        ec2_security_group.add_ingress_rule(
-            peer=ec2.Peer.any_ipv6(),
-            connection=ec2.Port.tcp(80),
-            description="Allow HTTP access from anywhere over IPv6"
-        )
 
         # Create Application Load Balancer
         alb = elbv2.ApplicationLoadBalancer(self, "ALB",
