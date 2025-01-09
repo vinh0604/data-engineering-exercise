@@ -61,11 +61,6 @@ class MyStack(Stack):
             connection=ec2.Port.tcp(80),
             description="Allow HTTP access from anywhere"
         )
-        ec2_security_group.add_ingress_rule(
-            peer=ec2.Peer.any_ipv4(),
-            connection=ec2.Port.tcp(22),
-            description="Allow SSH access from anywhere"
-        )
 
         # Create Application Load Balancer
         alb = elbv2.ApplicationLoadBalancer(self, "ALB",
