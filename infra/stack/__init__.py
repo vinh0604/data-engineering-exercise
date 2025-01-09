@@ -44,6 +44,12 @@ class MyStack(Stack):
             description="Security group for EC2 instances",
             allow_all_outbound=True
         )
+        # Allow EC2 Instance Connect
+        ec2_security_group.add_ingress_rule(
+            peer=ec2.Peer.ipv4("18.142.0.0/15"),  # AWS EC2 Instance Connect range for ap-southeast-1
+            connection=ec2.Port.tcp(22),
+            description="Allow SSH access from EC2 Instance Connect"
+        )
 
         # Create Application Load Balancer
         alb = elbv2.ApplicationLoadBalancer(self, "ALB",
