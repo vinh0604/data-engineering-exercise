@@ -1,4 +1,4 @@
-from aws_cdk import Stack, aws_ec2 as ec2, aws_rds as rds, RemovalPolicy
+from aws_cdk import Stack, aws_ec2 as ec2, aws_rds as rds, aws_autoscaling as autoscaling, aws_elasticloadbalancingv2 as elbv2, RemovalPolicy
 from constructs import Construct
 
 class MyStack(Stack):
@@ -48,5 +48,75 @@ class MyStack(Stack):
             publicly_accessible=False,
             removal_policy=RemovalPolicy.DESTROY,
             deletion_protection=False
+        )
+
+        # Create security group for EC2 instances
+        ec2_security_group = ec2.SecurityGroup(self, "EC2SecurityGroup",
+            vpc=vpc,
+            description="Security group for EC2 instances",
+            allow_all_outbound=True
+        )
+        ec2_security_group.add_ingress_rule(
+            peer=ec2.Peer.any_ipv4(),
+            connection=ec2.Port.tcp(80),
+            description="Allow HTTP access from anywhere"
+        )
+        ec2_security_group.add_ingress_rule(
+            peer=ec2.Peer.any_ipv4(),
+            connection=ec2.Port.tcp(22),
+            description="Allow SSH access from anywhere"
+        )
+
+        # Create Application Load Balancer
+        alb = elbv2.ApplicationLoadBalancer(self, "ALB",
+            vpc=vpc,
+            internet_facing=True,
+            security_group=ec2_security_group
+        )
+
+        # Add listener to ALB
+        listener = alb.add_listener("Listener",
+            port=80,
+            open=True
+        )
+
+        # Create Launch Template with Docker installed
+        launch_template = ec2.LaunchTemplate(self, "LaunchTemplate",
+            instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
+            machine_image=ec2.MachineImage.latest_amazon_linux2(),
+            security_group=ec2_security_group,
+            user_data=ec2.UserData.for_linux(),
+            block_devices=[
+                ec2.BlockDevice(
+                    device_name="/dev/xvda",
+                    volume=ec2.BlockDeviceVolume.ebs(
+                        volume_size=20,
+                        volume_type=ec2.EbsDeviceVolumeType.GP3
+                    )
+                )
+            ]
+        )
+        # Add Docker installation to user data
+        launch_template.user_data.add_commands(
+            "yum update -y",
+            "amazon-linux-extras install docker -y",
+            "service docker start",
+            "usermod -a -G docker ec2-user"
+        )
+
+        # Create Auto Scaling Group
+        asg = autoscaling.AutoScalingGroup(self, "ASG",
+            vpc=vpc,
+            launch_template=launch_template,
+            min_capacity=1,
+            max_capacity=3,
+            desired_capacity=1,
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC)
+        )
+
+        # Add ASG to ALB target group
+        listener.add_targets("ApplicationFleet",
+            port=80,
+            targets=[asg]
         )
 
