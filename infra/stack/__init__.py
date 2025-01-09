@@ -5,11 +5,12 @@ class MyStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # Create VPC with both public and private subnets
+        # Create VPC with both public and private subnets and IPv6 support
         vpc = ec2.Vpc(self, "MyVPC",
             ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/22"),  # 1024 IP addresses (10.0.0.0 - 10.0.3.255)
             max_azs=2,
             nat_gateways=0,  # Need NAT gateway for private subnet internet access
+            ip_protocol=ec2.IpProtocol.DUAL_STACK,
             subnet_configuration=[
                 ec2.SubnetConfiguration(
                     name="Public",
@@ -36,11 +37,16 @@ class MyStack(Stack):
             description="Allow HTTP access from anywhere"
         )
 
-        # Create security group for EC2 instances
+        # Create security group for EC2 instances with IPv6 support
         ec2_security_group = ec2.SecurityGroup(self, "EC2SecurityGroup",
             vpc=vpc,
             description="Security group for EC2 instances",
             allow_all_outbound=True
+        )
+        ec2_security_group.add_ingress_rule(
+            peer=ec2.Peer.any_ipv6(),
+            connection=ec2.Port.tcp(80),
+            description="Allow HTTP access from anywhere over IPv6"
         )
 
         # Create Application Load Balancer
@@ -56,12 +62,20 @@ class MyStack(Stack):
             open=True
         )
 
-        # Create Launch Template with Docker installed
+        # Create Launch Template with Docker installed and IPv6 support
         launch_template = ec2.LaunchTemplate(self, "LaunchTemplate",
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
             machine_image=ec2.MachineImage.latest_amazon_linux2(),
             security_group=ec2_security_group,
             user_data=ec2.UserData.for_linux(),
+            associate_public_ip_address=True,
+            network_interfaces=[
+                ec2.CfnLaunchTemplate.NetworkInterfaceProperty(
+                    associate_public_ip_address=True,
+                    ipv6_address_count=1,
+                    device_index=0
+                )
+            ],
             block_devices=[
                 ec2.BlockDevice(
                     device_name="/dev/xvda",
