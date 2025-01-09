@@ -86,12 +86,16 @@ class MyStack(Stack):
                 )
             ]
         )
-        # Add Docker installation to user data
+        # Add Docker installation and Metabase setup to user data
         launch_template.user_data.add_commands(
             "yum update -y",
             "amazon-linux-extras install docker -y",
             "service docker start",
-            "usermod -a -G docker ec2-user"
+            "usermod -a -G docker ec2-user",
+            # Download and run metabase setup script
+            "curl -o /home/ec2-user/setup-metabase.sh https://raw.githubusercontent.com/your-repo/main/infra/setup-metabase.sh",
+            "chmod +x /home/ec2-user/setup-metabase.sh",
+            "/home/ec2-user/setup-metabase.sh"
         )
 
         # Create Auto Scaling Group
