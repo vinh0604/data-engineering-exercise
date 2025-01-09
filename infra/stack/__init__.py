@@ -8,7 +8,7 @@ class MyStack(Stack):
         # Create VPC with both public and private subnets
         vpc = ec2.Vpc(self, "MyVPC",
             ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/22"),  # 1024 IP addresses (10.0.0.0 - 10.0.3.255)
-            max_azs=1,
+            max_azs=2,
             nat_gateways=0,  # Need NAT gateway for private subnet internet access
             subnet_configuration=[
                 ec2.SubnetConfiguration(
@@ -22,32 +22,6 @@ class MyStack(Stack):
                     cidr_mask=24
                 )
             ]
-        )
-
-        # Create security group for RDS
-        db_security_group = ec2.SecurityGroup(self, "DatabaseSecurityGroup",
-            vpc=vpc,
-            description="Security group for RDS instance",
-            allow_all_outbound=True
-        )
-        db_security_group.add_ingress_rule(
-            peer=ec2.Peer.security_group_id(db_security_group.security_group_id),
-            connection=ec2.Port.tcp(5432),
-            description="Allow PostgreSQL access from within the same security group"
-        )
-
-        # Create RDS instance
-        db = rds.DatabaseInstance(self, "Database",
-            engine=rds.DatabaseInstanceEngine.postgres(version=rds.PostgresEngineVersion.VER_13),
-            instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
-            vpc=vpc,
-            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
-            security_groups=[db_security_group],
-            allocated_storage=20,
-            max_allocated_storage=100,
-            publicly_accessible=False,
-            removal_policy=RemovalPolicy.DESTROY,
-            deletion_protection=False
         )
 
         # Create security group for ALB
@@ -67,11 +41,6 @@ class MyStack(Stack):
             vpc=vpc,
             description="Security group for EC2 instances",
             allow_all_outbound=True
-        )
-        ec2_security_group.add_ingress_rule(
-            peer=ec2.Peer.security_group_id(alb_security_group.security_group_id),
-            connection=ec2.Port.tcp(80),
-            description="Allow HTTP access only from ALB"
         )
 
         # Create Application Load Balancer
@@ -103,7 +72,6 @@ class MyStack(Stack):
                 )
             ]
         )
-        launch_template.add_security_group(db_security_group)
         # Add Docker installation to user data
         launch_template.user_data.add_commands(
             "yum update -y",
@@ -117,7 +85,7 @@ class MyStack(Stack):
             vpc=vpc,
             launch_template=launch_template,
             min_capacity=1,
-            max_capacity=3,
+            max_capacity=1,
             desired_capacity=1,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC)
         )
@@ -126,5 +94,31 @@ class MyStack(Stack):
         listener.add_targets("ApplicationFleet",
             port=80,
             targets=[asg]
+        )
+
+        # Create security group for RDS
+        db_security_group = ec2.SecurityGroup(self, "DatabaseSecurityGroup",
+            vpc=vpc,
+            description="Security group for RDS instance",
+            allow_all_outbound=True
+        )
+        db_security_group.add_ingress_rule(
+            peer=ec2.Peer.security_group_id(ec2_security_group.security_group_id),
+            connection=ec2.Port.tcp(5432),
+            description="Allow PostgreSQL access from within the same security group"
+        )
+
+        # Create RDS instance
+        db = rds.DatabaseInstance(self, "Database",
+            engine=rds.DatabaseInstanceEngine.postgres(version=rds.PostgresEngineVersion.VER_13),
+            instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
+            vpc=vpc,
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
+            security_groups=[db_security_group],
+            allocated_storage=20,
+            max_allocated_storage=100,
+            publicly_accessible=False,
+            removal_policy=RemovalPolicy.DESTROY,
+            deletion_protection=False
         )
 
