@@ -70,13 +70,6 @@ class MyStack(Stack):
             security_group=ec2_security_group,
             user_data=ec2.UserData.for_linux(),
             associate_public_ip_address=True,
-            network_interfaces=[
-                ec2.CfnLaunchTemplate.NetworkInterfaceProperty(
-                    associate_public_ip_address=True,
-                    ipv6_address_count=1,
-                    device_index=0
-                )
-            ],
             block_devices=[
                 ec2.BlockDevice(
                     device_name="/dev/xvda",
@@ -94,8 +87,8 @@ class MyStack(Stack):
             "service docker start",
             "usermod -a -G docker ec2-user",
             # Read setup script content
-            f"cat > /home/ec2-user/setup-metabase.sh <<'EOF'",
-            open(os.path.join(os.path.dirname(__file__), "../setup-metabase.sh")).read(),
+            "cat > /home/ec2-user/setup-metabase.sh <<'EOF'",
+            open(os.path.join(os.path.dirname(__file__), "../scripts/setup-metabase.sh")).read(),
             "EOF",
             "chmod +x /home/ec2-user/setup-metabase.sh",
             "/home/ec2-user/setup-metabase.sh"
