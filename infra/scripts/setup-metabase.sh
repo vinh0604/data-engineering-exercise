@@ -10,7 +10,7 @@ docker run -d -p 80:3000 \
   -e "MB_DB_FILE=/metabase-data/metabase.db" \
   --name metabase metabase/metabase
 
-sudo echo <<EOF
+cat <<EOF > /etc/systemd/system/metabase.service
 [Unit]
 Description=Metabase service
 After=docker.service
@@ -22,8 +22,8 @@ ExecStop=/usr/bin/docker stop metabase
 User=ec2-user
 [Install]
 WantedBy=multi-user.target
-EOF > /etc/systemd/system/metabase.service
+EOF
 
-sudo systemctl daemon-reload
-sudo systemctl enable metabase.service
-sudo systemctl start metabase.service
+systemctl daemon-reload
+systemctl enable metabase.service
+systemctl start metabase.service

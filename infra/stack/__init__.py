@@ -46,7 +46,7 @@ class MyStack(Stack):
         )
         # Allow EC2 Instance Connect
         ec2_security_group.add_ingress_rule(
-            peer=ec2.Peer.ipv4("18.142.0.0/15"),  # AWS EC2 Instance Connect range for ap-southeast-1
+            peer=ec2.Peer.prefix_list('pl-073f7512b7b9a2450'), # AWS Instance Connect prefix list ID for IPv4 for ap-southeast-1
             connection=ec2.Port.tcp(22),
             description="Allow SSH access from EC2 Instance Connect"
         )
@@ -88,11 +88,10 @@ class MyStack(Stack):
             "service docker start",
             "usermod -a -G docker ec2-user",
             # Read setup script content
-            "cat > /home/ec2-user/setup-metabase.sh <<'EOF'",
+            "cat <<MTL > /home/ec2-user/setup-metabase.sh",
             open(os.path.join(os.path.dirname(__file__), "../scripts/setup-metabase.sh")).read(),
-            "EOF",
-            "chmod +x /home/ec2-user/setup-metabase.sh",
-            "/home/ec2-user/setup-metabase.sh"
+            "MTL",
+            "chmod +x /home/ec2-user/setup-metabase.sh"
         )
 
         # Create Auto Scaling Group
