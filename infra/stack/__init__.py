@@ -1,4 +1,4 @@
-from aws_cdk import Stack, aws_ec2 as ec2, aws_rds as rds, aws_autoscaling as autoscaling, aws_elasticloadbalancingv2 as elbv2, RemovalPolicy
+from aws_cdk import Stack, aws_ec2 as ec2, aws_rds as rds, aws_autoscaling as autoscaling, aws_elasticloadbalancingv2 as elbv2, aws_s3 as s3, RemovalPolicy
 import os
 from constructs import Construct
 
@@ -120,6 +120,16 @@ class MyStack(Stack):
             peer=ec2.Peer.security_group_id(ec2_security_group.security_group_id),
             connection=ec2.Port.tcp(5432),
             description="Allow PostgreSQL access from within the same security group"
+        )
+
+        # Create S3 bucket for data engineering training
+        bucket = s3.Bucket(self, "DataEngineerTrainingBucket",
+            bucket_name="vinh.dataengineertraining",
+            versioned=True,
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True
         )
 
         # Create RDS instance
