@@ -70,7 +70,8 @@ class MyBaseStack(Stack):
             machine_image=ec2.MachineImage.latest_amazon_linux2(),
             security_group=ec2_security_group,
             user_data=ec2.UserData.for_linux(),
-            associate_public_ip_address=True,
+            associate_public_ip_address=False,
+            ipv6_addressing=True,
             block_devices=[
                 ec2.BlockDevice(
                     device_name="/dev/xvda",
