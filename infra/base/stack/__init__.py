@@ -85,6 +85,8 @@ class MyBaseStack(Stack):
         # Add Docker installation and Metabase setup to user data
         launch_template.user_data.add_commands(
             "yum update -y",
+            "amazon-linux-extras enable postgresql14",
+            "yum install -y postgresql",
             "amazon-linux-extras install docker -y",
             "service docker start",
             "usermod -a -G docker ec2-user",
@@ -92,7 +94,9 @@ class MyBaseStack(Stack):
             "cat <<MTL > /home/ec2-user/setup-metabase.sh",
             open(os.path.join(os.path.dirname(__file__), "../../scripts/setup-metabase.sh")).read(),
             "MTL",
-            "chmod +x /home/ec2-user/setup-metabase.sh"
+            "chmod +x /home/ec2-user/setup-metabase.sh",
+            # enable Dual Stack endpoint for S3
+            "aws configure set default.s3.use_dualstack_endpoint true"
         )
 
         # Create Auto Scaling Group
