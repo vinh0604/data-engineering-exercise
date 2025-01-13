@@ -2,7 +2,7 @@ from aws_cdk import Stack, aws_ec2 as ec2, aws_rds as rds, aws_autoscaling as au
 import os
 from constructs import Construct
 
-class MyStack(Stack):
+class MyBaseStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 

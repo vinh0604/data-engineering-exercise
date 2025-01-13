@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import aws_cdk as cdk
-from stack import MyStack
+from stack import MyBaseStack
 
 app = cdk.App()
 
@@ -9,6 +9,6 @@ env = cdk.Environment(
     region="ap-southeast-1"
 )
 
-MyStack(app, "MyStack", env=env)
+MyBaseStack(app, "MyBaseStack", env=env)
 
 app.synth()
