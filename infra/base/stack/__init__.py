@@ -42,7 +42,8 @@ class MyBaseStack(Stack):
         ec2_security_group = ec2.SecurityGroup(self, "EC2SecurityGroup",
             vpc=vpc,
             description="Security group for EC2 instances",
-            allow_all_outbound=True
+            allow_all_outbound=True,
+            allow_all_ipv6_outbound=True
         )
         # Allow EC2 Instance Connect
         ec2_security_group.add_ingress_rule(
@@ -89,7 +90,7 @@ class MyBaseStack(Stack):
             "usermod -a -G docker ec2-user",
             # Read setup script content
             "cat <<MTL > /home/ec2-user/setup-metabase.sh",
-            open(os.path.join(os.path.dirname(__file__), "../scripts/setup-metabase.sh")).read(),
+            open(os.path.join(os.path.dirname(__file__), "../../scripts/setup-metabase.sh")).read(),
             "MTL",
             "chmod +x /home/ec2-user/setup-metabase.sh"
         )
