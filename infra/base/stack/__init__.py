@@ -46,7 +46,7 @@ class MyBaseStack(Stack):
         )
         # Allow EC2 Instance Connect
         ec2_security_group.add_ingress_rule(
-            peer=ec2.Peer.prefix_list('pl-073f7512b7b9a2450'), # AWS Instance Connect prefix list ID for IPv4 for ap-southeast-1
+            peer=ec2.Peer.prefix_list('pl-000f9420a91cfc3b6'), # AWS Instance Connect prefix list ID for IPv6 for ap-southeast-1
             connection=ec2.Port.tcp(22),
             description="Allow SSH access from EC2 Instance Connect"
         )
@@ -71,7 +71,6 @@ class MyBaseStack(Stack):
             security_group=ec2_security_group,
             user_data=ec2.UserData.for_linux(),
             associate_public_ip_address=False,
-            ipv6_addressing=True,
             block_devices=[
                 ec2.BlockDevice(
                     device_name="/dev/xvda",
