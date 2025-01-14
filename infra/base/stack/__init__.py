@@ -34,7 +34,7 @@ class MyBaseStack(Stack):
 
         # Create security group for ALB
         alb_security_group = ec2.SecurityGroup(self, "ALBSecurityGroup",
-            vpc=vpc,
+            vpc=self.vpc,
             description="Security group for Application Load Balancer",
             allow_all_outbound=True
         )
@@ -52,7 +52,7 @@ class MyBaseStack(Stack):
             allow_all_ipv6_outbound=True
         )
         # Allow EC2 Instance Connect
-        ec2_security_group.add_ingress_rule(
+        self.ec2_security_group.add_ingress_rule(
             peer=ec2.Peer.prefix_list('pl-000f9420a91cfc3b6'), # AWS Instance Connect prefix list ID for IPv6 for ap-southeast-1
             connection=ec2.Port.tcp(22),
             description="Allow SSH access from EC2 Instance Connect"
@@ -75,7 +75,7 @@ class MyBaseStack(Stack):
         launch_template = ec2.LaunchTemplate(self, "LaunchTemplate",
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
             machine_image=ec2.MachineImage.latest_amazon_linux2(),
-            security_group=ec2_security_group,
+            security_group=self.ec2_security_group,
             user_data=ec2.UserData.for_linux(),
             associate_public_ip_address=False,
             block_devices=[
@@ -154,7 +154,7 @@ class MyBaseStack(Stack):
             allow_all_outbound=True
         )
         db_security_group.add_ingress_rule(
-            peer=ec2.Peer.security_group_id(ec2_security_group.security_group_id),
+            peer=ec2.Peer.security_group_id(self.ec2_security_group.security_group_id),
             connection=ec2.Port.tcp(5432),
             description="Allow PostgreSQL access from within the same security group"
         )
