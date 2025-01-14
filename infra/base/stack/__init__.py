@@ -1,13 +1,19 @@
-from aws_cdk import Stack, aws_ec2 as ec2, aws_rds as rds, aws_autoscaling as autoscaling, aws_elasticloadbalancingv2 as elbv2, aws_s3 as s3, RemovalPolicy
+from aws_cdk import Stack, aws_ec2 as ec2, aws_rds as rds, aws_autoscaling as autoscaling, aws_elasticloadbalancingv2 as elbv2, aws_s3 as s3, RemovalPolicy, CfnOutput
 import os
 from constructs import Construct
 
 class MyBaseStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        
+        # Expose key resources as class properties
+        self.vpc = None
+        self.db = None
+        self.bucket = None
+        self.ec2_security_group = None
 
         # Create VPC with both public and private subnets and IPv6 support
-        vpc = ec2.Vpc(self, "MyVPC",
+        self.vpc = ec2.Vpc(self, "MyVPC",
             ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/22"),  # 1024 IP addresses (10.0.0.0 - 10.0.3.255)
             max_azs=2,
             nat_gateways=0,  # Need NAT gateway for private subnet internet access
@@ -39,7 +45,7 @@ class MyBaseStack(Stack):
         )
 
         # Create security group for EC2 instances with IPv6 support
-        ec2_security_group = ec2.SecurityGroup(self, "EC2SecurityGroup",
+        self.ec2_security_group = ec2.SecurityGroup(self, "EC2SecurityGroup",
             vpc=vpc,
             description="Security group for EC2 instances",
             allow_all_outbound=True,
@@ -99,6 +105,32 @@ class MyBaseStack(Stack):
             "aws configure set default.s3.use_dualstack_endpoint true"
         )
 
+        # Export key resources for cross-stack references
+        CfnOutput(self, "VpcId",
+            value=self.vpc.vpc_id,
+            export_name="VpcId"
+        )
+        
+        CfnOutput(self, "BucketName",
+            value=self.bucket.bucket_name,
+            export_name="BucketName"
+        )
+        
+        CfnOutput(self, "DatabaseEndpoint",
+            value=self.db.db_instance_endpoint_address,
+            export_name="DatabaseEndpoint"
+        )
+        
+        CfnOutput(self, "DatabaseSecurityGroupId",
+            value=db_security_group.security_group_id,
+            export_name="DatabaseSecurityGroupId"
+        )
+        
+        CfnOutput(self, "Ec2SecurityGroupId",
+            value=self.ec2_security_group.security_group_id,
+            export_name="Ec2SecurityGroupId"
+        )
+
         # Create Auto Scaling Group
         asg = autoscaling.AutoScalingGroup(self, "ASG",
             vpc=vpc,
@@ -128,7 +160,7 @@ class MyBaseStack(Stack):
         )
 
         # Create S3 bucket for data engineering training
-        bucket = s3.Bucket(self, "DataEngineerTrainingBucket",
+        self.bucket = s3.Bucket(self, "DataEngineerTrainingBucket",
             bucket_name="vinh.dataengineertraining",
             versioned=True,
             encryption=s3.BucketEncryption.S3_MANAGED,
@@ -138,7 +170,7 @@ class MyBaseStack(Stack):
         )
 
         # Create RDS instance
-        db = rds.DatabaseInstance(self, "Database",
+        self.db = rds.DatabaseInstance(self, "Database",
             engine=rds.DatabaseInstanceEngine.postgres(version=rds.PostgresEngineVersion.VER_13),
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
             vpc=vpc,
