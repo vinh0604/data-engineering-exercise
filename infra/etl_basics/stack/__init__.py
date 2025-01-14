@@ -37,12 +37,30 @@ class MyETLBasicStack(Stack):
             ]
         )
 
+        # Glue Connection
+        glue_connection = glue.CfnConnection(self, "PostgresConnection",
+            catalog_id=self.account,
+            connection_input=glue.CfnConnection.ConnectionInputProperty(
+                connection_type="JDBC",
+                connection_properties={
+                    "JDBC_CONNECTION_URL": f"jdbc:postgresql://{db_endpoint}:5432/chinook",
+                    "USERNAME": "postgres",  # Replace with your actual DB username
+                    "PASSWORD": "password"   # Replace with your actual DB password
+                },
+                physical_connection_requirements=glue.CfnConnection.PhysicalConnectionRequirementsProperty(
+                    availability_zone=vpc.availability_zones[0],
+                    security_group_id_list=[ec2_security_group.security_group_id],
+                    subnet_id=vpc.private_subnets[0].subnet_id
+                )
+            )
+        )
+
         # Glue Job
         glue_job = glue.CfnJob(self, "ChinookETLJob",
             name="chinook-etl-job",
             role=glue_role.role_arn,
             connections=glue.CfnJob.ConnectionsListProperty(
-                connections=[f"{vpc.vpc_id}-{ec2_security_group.security_group_id}"]
+                connections=[glue_connection.ref]
             ),
             command=glue.CfnJob.JobCommandProperty(
                 name="glueetl",
