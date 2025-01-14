@@ -41,16 +41,11 @@ class MyETLBasicStack(Stack):
         glue_connection = glue.CfnConnection(self, "PostgresConnection",
             catalog_id=self.account,
             connection_input=glue.CfnConnection.ConnectionInputProperty(
-                connection_type="JDBC",
-                connection_properties={
-                    "JDBC_CONNECTION_URL": f"jdbc:postgresql://{db_endpoint}:5432/chinook",
-                    "USERNAME": "postgres",  # Replace with your actual DB username
-                    "PASSWORD": "password"   # Replace with your actual DB password
-                },
+                connection_type="NETWORK",
                 physical_connection_requirements=glue.CfnConnection.PhysicalConnectionRequirementsProperty(
                     availability_zone=vpc.availability_zones[0],
                     security_group_id_list=[ec2_security_group.security_group_id],
-                    subnet_id=vpc.private_subnets[0].subnet_id
+                    subnet_id=vpc.public_subnets[0].subnet_id
                 )
             )
         )
@@ -82,6 +77,6 @@ class MyETLBasicStack(Stack):
             },
             glue_version="3.0",
             worker_type="G.1X",
-            number_of_workers=2,
+            number_of_workers=1,
             timeout=60
         )

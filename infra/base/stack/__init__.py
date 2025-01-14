@@ -11,6 +11,7 @@ class MyBaseStack(Stack):
         self.db = None
         self.bucket = None
         self.ec2_security_group = None
+        self.db_security_group = None
 
         # Create VPC with both public and private subnets and IPv6 support
         self.vpc = ec2.Vpc(self, "MyVPC",
@@ -122,12 +123,12 @@ class MyBaseStack(Stack):
         )
 
         # Create security group for RDS
-        db_security_group = ec2.SecurityGroup(self, "DatabaseSecurityGroup",
+        self.db_security_group = ec2.SecurityGroup(self, "DatabaseSecurityGroup",
             vpc=self.vpc,
             description="Security group for RDS instance",
             allow_all_outbound=True
         )
-        db_security_group.add_ingress_rule(
+        self.db_security_group.add_ingress_rule(
             peer=ec2.Peer.security_group_id(self.ec2_security_group.security_group_id),
             connection=ec2.Port.tcp(5432),
             description="Allow PostgreSQL access from within the same security group"
@@ -149,7 +150,7 @@ class MyBaseStack(Stack):
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
             vpc=self.vpc,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
-            security_groups=[db_security_group],
+            security_groups=[self.db_security_group],
             allocated_storage=20,
             max_allocated_storage=100,
             publicly_accessible=False,
@@ -176,4 +177,9 @@ class MyBaseStack(Stack):
         CfnOutput(self, "Ec2SecurityGroupId",
             value=self.ec2_security_group.security_group_id,
             export_name="BaseEc2SecurityGroupId"
+        )
+        
+        CfnOutput(self, "DbSecurityGroupId",
+            value=self.db_security_group.security_group_id,
+            export_name="BaseDbSecurityGroupId"
         )
