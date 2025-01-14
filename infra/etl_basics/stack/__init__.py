@@ -16,9 +16,6 @@ class MyETLBasicStack(Stack):
         )
         
         db_endpoint = Fn.import_value("DatabaseEndpoint")
-        db_security_group = ec2.SecurityGroup.from_security_group_id(self, "DbSg",
-            security_group_id=Fn.import_value("DatabaseSecurityGroupId")
-        )
         
         ec2_security_group = ec2.SecurityGroup.from_security_group_id(self, "Ec2Sg",
             security_group_id=Fn.import_value("Ec2SecurityGroupId")
