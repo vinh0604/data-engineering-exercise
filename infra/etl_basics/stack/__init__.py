@@ -37,10 +37,27 @@ class MyETLBasicStack(Stack):
             ]
         )
 
+        # Glue Job Security Group
+        glue_security_group = ec2.SecurityGroup(self, "GlueSecurityGroup",
+            vpc=vpc,
+            description="Security group for Glue ETL job",
+            allow_all_outbound=True
+        )
+        
+        # Allow Glue to access RDS
+        glue_security_group.connections.allow_to(
+            ec2_security_group,
+            ec2.Port.tcp(5432),
+            "Allow Glue to access PostgreSQL"
+        )
+
         # Glue Job
         glue_job = glue.CfnJob(self, "ChinookETLJob",
             name="chinook-etl-job",
             role=glue_role.role_arn,
+            connections=glue.CfnJob.ConnectionsListProperty(
+                connections=[f"{vpc.vpc_id}-{glue_security_group.security_group_id}"]
+            ),
             command=glue.CfnJob.JobCommandProperty(
                 name="glueetl",
                 python_version="3",
