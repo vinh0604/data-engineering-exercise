@@ -46,7 +46,7 @@ class MyBaseStack(Stack):
 
         # Create security group for EC2 instances with IPv6 support
         self.ec2_security_group = ec2.SecurityGroup(self, "EC2SecurityGroup",
-            vpc=vpc,
+            vpc=self.vpc,
             description="Security group for EC2 instances",
             allow_all_outbound=True,
             allow_all_ipv6_outbound=True
@@ -60,7 +60,7 @@ class MyBaseStack(Stack):
 
         # Create Application Load Balancer
         alb = elbv2.ApplicationLoadBalancer(self, "ALB",
-            vpc=vpc,
+            vpc=self.vpc,
             internet_facing=True,
             security_group=alb_security_group
         )
@@ -105,35 +105,9 @@ class MyBaseStack(Stack):
             "aws configure set default.s3.use_dualstack_endpoint true"
         )
 
-        # Export key resources for cross-stack references
-        CfnOutput(self, "VpcId",
-            value=self.vpc.vpc_id,
-            export_name="VpcId"
-        )
-        
-        CfnOutput(self, "BucketName",
-            value=self.bucket.bucket_name,
-            export_name="BucketName"
-        )
-        
-        CfnOutput(self, "DatabaseEndpoint",
-            value=self.db.db_instance_endpoint_address,
-            export_name="DatabaseEndpoint"
-        )
-        
-        CfnOutput(self, "DatabaseSecurityGroupId",
-            value=db_security_group.security_group_id,
-            export_name="DatabaseSecurityGroupId"
-        )
-        
-        CfnOutput(self, "Ec2SecurityGroupId",
-            value=self.ec2_security_group.security_group_id,
-            export_name="Ec2SecurityGroupId"
-        )
-
         # Create Auto Scaling Group
         asg = autoscaling.AutoScalingGroup(self, "ASG",
-            vpc=vpc,
+            vpc=self.vpc,
             launch_template=launch_template,
             min_capacity=1,
             max_capacity=1,
@@ -149,7 +123,7 @@ class MyBaseStack(Stack):
 
         # Create security group for RDS
         db_security_group = ec2.SecurityGroup(self, "DatabaseSecurityGroup",
-            vpc=vpc,
+            vpc=self.vpc,
             description="Security group for RDS instance",
             allow_all_outbound=True
         )
@@ -173,7 +147,7 @@ class MyBaseStack(Stack):
         self.db = rds.DatabaseInstance(self, "Database",
             engine=rds.DatabaseInstanceEngine.postgres(version=rds.PostgresEngineVersion.VER_13),
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
-            vpc=vpc,
+            vpc=self.vpc,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
             security_groups=[db_security_group],
             allocated_storage=20,
@@ -183,3 +157,23 @@ class MyBaseStack(Stack):
             deletion_protection=False
         )
 
+        # Export key resources for cross-stack references
+        CfnOutput(self, "VpcId",
+            value=self.vpc.vpc_id,
+            export_name="BaseVpcId"
+        )
+        
+        CfnOutput(self, "BucketName",
+            value=self.bucket.bucket_name,
+            export_name="BaseBucketName"
+        )
+        
+        CfnOutput(self, "DatabaseEndpoint",
+            value=self.db.db_instance_endpoint_address,
+            export_name="BaseDatabaseEndpoint"
+        )
+        
+        CfnOutput(self, "Ec2SecurityGroupId",
+            value=self.ec2_security_group.security_group_id,
+            export_name="BaseEc2SecurityGroupId"
+        )
