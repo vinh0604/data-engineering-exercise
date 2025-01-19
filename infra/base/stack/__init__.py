@@ -23,7 +23,8 @@ class MyBaseStack(Stack):
                 ec2.SubnetConfiguration(
                     name="Public",
                     subnet_type=ec2.SubnetType.PUBLIC,
-                    cidr_mask=24
+                    cidr_mask=24,
+                    ipv6_assign_address_on_creation=True
                 ),
                 ec2.SubnetConfiguration(
                     name="Private",
@@ -63,7 +64,8 @@ class MyBaseStack(Stack):
         alb = elbv2.ApplicationLoadBalancer(self, "ALB",
             vpc=self.vpc,
             internet_facing=True,
-            security_group=alb_security_group
+            security_group=alb_security_group,
+            ip_address_type=elbv2.IpAddressType.DUAL_STACK_WITHOUT_PUBLIC_IPV4
         )
 
         # Add listener to ALB
@@ -104,22 +106,6 @@ class MyBaseStack(Stack):
             "chmod +x /home/ec2-user/setup-metabase.sh",
             # enable Dual Stack endpoint for S3
             "aws configure set default.s3.use_dualstack_endpoint true"
-        )
-
-        # Create Auto Scaling Group
-        asg = autoscaling.AutoScalingGroup(self, "ASG",
-            vpc=self.vpc,
-            launch_template=launch_template,
-            min_capacity=1,
-            max_capacity=1,
-            desired_capacity=1,
-            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC)
-        )
-
-        # Add ASG to ALB target group
-        listener.add_targets("ApplicationFleet",
-            port=80,
-            targets=[asg]
         )
 
         # Create security group for RDS
