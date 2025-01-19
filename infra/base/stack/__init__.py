@@ -91,7 +91,8 @@ class MyBaseStack(Stack):
                                             volume_type=ec2.EbsDeviceVolumeType.GP3
                                         )
                                     )
-                                ]
+                                ],
+                                ipv6_address_count=1  # Enable primary IPv6 address
                                 )
         # Add Docker installation and Metabase setup to user data
         instance.user_data.add_commands(
