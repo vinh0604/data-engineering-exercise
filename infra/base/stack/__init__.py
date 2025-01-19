@@ -1,4 +1,4 @@
-from aws_cdk import Stack, aws_ec2 as ec2, aws_rds as rds, aws_elasticloadbalancingv2 as elbv2, aws_s3 as s3, RemovalPolicy, CfnOutput
+from aws_cdk import Stack, Duration, aws_ec2 as ec2, aws_rds as rds, aws_elasticloadbalancingv2 as elbv2, aws_s3 as s3, RemovalPolicy, CfnOutput
 from aws_cdk import aws_elasticloadbalancingv2_targets as targets
 import os
 from constructs import Construct
@@ -42,12 +42,18 @@ class MyBaseStack(Stack):
         alb_security_group = ec2.SecurityGroup(self, "ALBSecurityGroup",
                                                vpc=self.vpc,
                                                description="Security group for Application Load Balancer",
-                                               allow_all_outbound=True
+                                               allow_all_outbound=True,
+                                                    allow_all_ipv6_outbound=True
                                                )
         alb_security_group.add_ingress_rule(
             peer=ec2.Peer.any_ipv4(),
             connection=ec2.Port.tcp(80),
             description="Allow HTTP access from anywhere"
+        )
+        alb_security_group.add_ingress_rule(
+            peer=ec2.Peer.any_ipv6(),
+            connection=ec2.Port.tcp(80),
+            description="Allow HTTP access from anywhere IPv6"
         )
 
         # Create security group for EC2 instances with IPv6 support
@@ -63,6 +69,12 @@ class MyBaseStack(Stack):
             peer=ec2.Peer.prefix_list('pl-000f9420a91cfc3b6'),
             connection=ec2.Port.tcp(22),
             description="Allow SSH access from EC2 Instance Connect"
+        )
+        # Allow HTTP access from ALB
+        self.ec2_security_group.add_ingress_rule(
+            peer=alb_security_group,
+            connection=ec2.Port.tcp(80),
+            description="Allow HTTP access from ALB"
         )
 
         # Create Application Load Balancer
@@ -118,11 +130,26 @@ class MyBaseStack(Stack):
                                     open=True
                                     )
 
-        listener.add_targets("InstanceTarget",
-                             port=80,
-                             targets=[targets.InstanceIdTarget(
-                                 instance_id=instance.instance_id, port=80)]
-                             )
+        target_group = elbv2.ApplicationTargetGroup(self, "TargetGroup",
+                                                    vpc=self.vpc,
+                                                    port=80,
+                                                    # targets=[targets.InstanceIdTarget(
+                                                    #     instance_id=instance.instance_id, port=80)],
+                                                    targets=[], # No targets initially, TODO: check missing primary IPv6 addresses issue
+                                                    target_type=elbv2.TargetType.INSTANCE,
+                                                    ip_address_type=elbv2.TargetGroupIpAddressType.IPV6,
+                                                    health_check=elbv2.HealthCheck(
+                                                        path="/api/health",
+                                                        interval=Duration.seconds(
+                                                            30),
+                                                        timeout=Duration.seconds(
+                                                            5)
+                                                    )
+                                                    )
+
+        listener.add_target_groups("ListenerTargetGroup",
+                                   target_groups=[target_group]
+                                   )
 
         # Create security group for RDS
         self.db_security_group = ec2.SecurityGroup(self, "DatabaseSecurityGroup",
